@@ -293,6 +293,21 @@ test('the README advertises the deployment and the page offers installation', ()
     'an installed copy should say so instead of offering to install again');
 });
 
+test('every comparable specimen has its lineup render', () => {
+  // The figure falls back to a silhouette when a render is missing, which is the
+  // right behaviour in the page and the wrong thing to discover in production:
+  // the pictures are supposed to be the real cells.
+  for (const [id, cell] of Object.entries(specimens)) {
+    if (!cell.size) continue;
+    const file = path.join(projectRoot, 'public', 'lineup', `${id}.png`);
+    assert.ok(existsSync(file), `public/lineup/${id}.png is missing — run: npm run lineup`);
+  }
+  const renderer = readFileSync(path.join(projectRoot, 'tools/render_lineup.py'), 'utf8');
+  assert.match(renderer, /PIXELS_PER_MICRON/, 'the renderer must fix one scale for every specimen');
+  assert.match(renderer, /view_layer\.update\(\)/,
+    'Blender caches matrix_world; without an update the frame is computed against a stale camera');
+});
+
 test('the share of structures that are membranes is stated, not implied', () => {
   // "no structure in the model" must never read as "not present in the cell".
   for (const [id, cell] of Object.entries(specimens)) {

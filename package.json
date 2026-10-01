@@ -12,7 +12,8 @@
     "check:models": "node tools/check-models.mjs",
     "compress": "node tools/compress-glb.mjs public .compress-preview",
     "share": "node tools/make-share-kit.mjs",
-    "pack": "npm run build && node tools/make-offline-pack.mjs"
+    "pack": "npm run build && node tools/make-offline-pack.mjs",
+    "lineup": "node tools/render-lineup.mjs"
   },
   "dependencies": {
     "three": "^0.180.0",

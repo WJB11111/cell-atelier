@@ -52,6 +52,9 @@ export function createFocusView({ renderer, scene, camera, controls, mount }) {
   let lastScan = 0;
   let tween = null;
   let englishName = '';
+  //: previous camera pose, to tell "the user is moving" from "the view settled"
+  const lastCamera = new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN);
+  const lastTarget = new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN);
 
   controls.addEventListener('change', () => { anchorStale = true; });
   controls.addEventListener('start', () => { tween = null; });
@@ -232,6 +235,18 @@ export function createFocusView({ renderer, scene, camera, controls, mount }) {
         anchorStale = true;
       }
       controls.update();
+
+      // The outline costs two extra full-screen passes over the selected
+      // objects, which is the difference between a smooth drag and a stuttery
+      // one. It is therefore only drawn once the camera has settled: while the
+      // user is moving, the selection is still obvious from the emissive tint
+      // and from everything else fading back.
+      const moved = camera.position.distanceToSquared(lastCamera) > 1e-7
+        || controls.target.distanceToSquared(lastTarget) > 1e-9;
+      lastCamera.copy(camera.position);
+      lastTarget.copy(controls.target);
+      outline.enabled = chosen.length > 0 && !tween && !moved;
+
       composer.render();
       drawLabel(now);
     },
