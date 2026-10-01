@@ -28,8 +28,25 @@ import studio  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 #: pixels per micrometre, the same for every specimen
 PIXELS_PER_MICRON = 11.0
+#: air around each cell, as a fraction of its own width. The frame is still
+#: exactly ``real * PIXELS_PER_MICRON`` pixels wide, so the cell occupies
+#: 1/MARGIN of it and the page needs no extra bookkeeping: one micrometre stays
+#: PIXELS_PER_MICRON/MARGIN pixels inside the image.
+MARGIN = 1.24
+#: air above a cell, relative to its own height; the bottom is flush, so every
+#: image stands on its own bottom edge and the row lines up on one ground line
+TOP_MARGIN = 1.14
 #: structures that belong to the named one and follow its highlight
 AUXILIARY = {"nucleolus"}
+#: Specimens whose declared structure is only part of the model. A real axon is a
+#: thousand times its soma and a flagellum some ten times its head, so drawing the
+#: whole cell at true scale would leave the measured part a speck. These render the
+#: measured part alone — a complete cell in frame, with the page's caption saying
+#: what was left out.
+CROP_TO_STRUCTURE = {
+    "neuron": {"soma", "nucleus", "nucleolus"},
+    "sperm-cell": {"nucleus", "acrosome"},
+}
 #: The same three-quarter-from-above angles the catalogue thumbnails use. A
 #: shallow side view turns the plant cell into a closed box and hides the section
 #: opening; these show the inside, which is the whole reason the models are cut.
@@ -59,6 +76,14 @@ def main() -> None:
     specimen = Path(blend).stem
 
     bpy.ops.wm.open_mainfile(filepath=str(ROOT / blend))
+    keep = CROP_TO_STRUCTURE.get(specimen)
+    if keep:
+        # hide the parts that would otherwise run off the frame, so the picture
+        # shows one whole cell rather than a slice of one
+        for obj in bpy.context.scene.objects:
+            if obj.type == "MESH" and obj.get("organelle") not in keep:
+                obj.hide_render = True
+
     objects = structure_objects(structure)
     if not objects:
         raise SystemExit(f"{blend}: no mesh tagged as {structure}")
@@ -95,13 +120,25 @@ def main() -> None:
     if span.x <= 0:
         raise SystemExit(f"{blend}: {structure} projects to nothing")
 
-    # the projected width is the declared real size; everything else follows
+    # the projected width is the declared real size, plus the margin; everything
+    # else follows. sensor_fit keeps ortho_scale meaning the frame *width*, which
+    # it would otherwise stop doing the moment an image is taller than it is wide.
     scene = bpy.context.scene
-    scene.render.resolution_x = max(24, round(real * PIXELS_PER_MICRON))
-    scene.render.resolution_y = max(24, round(real * PIXELS_PER_MICRON * span.y / span.x))
-    data.ortho_scale = span.x
-    offset = camera.matrix_world.to_3x3() @ Vector(((low.x + high.x) / 2, (low.y + high.y) / 2, 0.0))
-    camera.location -= offset
+    data.sensor_fit = "HORIZONTAL"
+    data.ortho_scale = span.x * MARGIN
+    scene.render.resolution_x = max(32, round(real * PIXELS_PER_MICRON))
+    scene.render.resolution_y = max(32, round(real * PIXELS_PER_MICRON * span.y * TOP_MARGIN / span.x))
+
+    # Lay the cell on the bottom edge of the frame and give it air above and to the
+    # sides. A uniform margin would leave the small cells floating higher than the
+    # large ones, and the row is supposed to stand on one ground line.
+    frame_height = data.ortho_scale * scene.render.resolution_y / scene.render.resolution_x
+    camera_shift = camera.matrix_world.to_3x3() @ Vector((
+        (low.x + high.x) / 2,
+        (low.y + high.y) / 2 - (-frame_height / 2 + span.y),
+        0.0,
+    ))
+    camera.location -= camera_shift
     bpy.context.view_layer.update()
 
     studio._add_light(scene, "Key", camera.location + Vector((-3.4, 4.2, 3.0)), centre, 2.3, 4.0)

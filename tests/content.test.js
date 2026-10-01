@@ -306,6 +306,10 @@ test('every comparable specimen has its lineup render', () => {
   assert.match(renderer, /PIXELS_PER_MICRON/, 'the renderer must fix one scale for every specimen');
   assert.match(renderer, /view_layer\.update\(\)/,
     'Blender caches matrix_world; without an update the frame is computed against a stale camera');
+  assert.match(renderer, /CROP_TO_STRUCTURE/,
+    'the two specimens whose processes run off any true-scale frame must render the measured part only');
+  assert.match(renderer, /sensor_fit/,
+    'ortho_scale has to keep meaning frame width, or tall pictures break the micrometre mapping');
 });
 
 test('the share of structures that are membranes is stated, not implied', () => {

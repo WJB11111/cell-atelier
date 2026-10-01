@@ -12,6 +12,12 @@
 import { SHAPES } from './size-shapes.js';
 
 const PIXELS_PER_MICRON = 5.2;
+//: what the picture leaves out, for the two specimens whose measured part is only
+//: a fraction of the real cell — the renders show that part alone
+const CROPPED = {
+  neuron: '图中只画胞体',
+  'sperm-cell': '图中只画头部',
+};
 //: every silhouette stands on this ground line, in µm
 const BASELINE = 22;
 const CANVAS_HEIGHT = 26;
@@ -55,8 +61,9 @@ export function createSizeChart(container, specimens) {
     }, { once: true });
     item.append(img);
 
+    const crop = CROPPED[id] ? `<i>${CROPPED[id]}</i>` : '';
     const caption = document.createElement('figcaption');
-    caption.innerHTML = `<b>${cell.zh}</b><span>${size.real} ${size.unit}</span>`
+    caption.innerHTML = `<b>${cell.zh}</b><span>${size.real} ${size.unit}</span>${crop}`
       + (size.note ? `<em>${size.note}</em>` : '');
     item.append(caption);
     row.append(item);
