@@ -39,18 +39,22 @@ jobs:
       - name: Tests
         run: npm test
 
+      # configure-pages runs before the build so the Pages metadata is available;
+      # the base path itself is derived from GITHUB_REPOSITORY in vite.config.js.
+      - uses: actions/configure-pages@v5
+
       - name: Build
         run: npm run build
         env:
           GITHUB_PAGES: 'true'
 
-      - name: Report bundle size
+      - name: Report what will be published
         run: |
           du -sh dist
-          du -sh dist/*.glb 2>/dev/null | tail -3 || true
-          node -e "const {readFileSync}=require('fs');const sw=readFileSync('dist/sw.js','utf8');console.log(sw.match(/const PRECACHE = \[[^\]]*\]/)[0].split(',').length + ' files precached')"
-
-      - uses: actions/configure-pages@v5
+          echo "--- offline worker ---"
+          grep -o "cell-atelier-[0-9a-f]*" dist/sw.js | head -1
+          echo "--- share QR base ---"
+          cat dist/share/base.json
 
       - uses: actions/upload-pages-artifact@v3
         with:
