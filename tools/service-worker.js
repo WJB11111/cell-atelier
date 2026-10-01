@@ -1,27 +1,46 @@
 // Service worker for Cell Atelier.
 //
 // Generated at build time with the real asset list substituted in, so the cache
-// is always in step with the bundle. Strategy: precache everything on install
-// (the whole site is about 4 MB after compression), serve cache-first, and fall
-// back to the cached shell for navigations so the page opens with no network.
+// is always in step with the bundle.
+//
+// Two-stage strategy, and the staging is the point. Install fetches only the
+// shell — HTML, bundle, manifest, icons, about 700 KB — because that always
+// finishes. The four megabytes of models and thumbnails are fetched afterwards,
+// in the background, on the page's request. Waiting for all of them during
+// install looked fine on a fast connection and hung on a slow one: the browser
+// abandons an install that stalls, and the site then silently never becomes
+// offline-capable at all. A model opened before the warm-up reaches it is cached
+// by the fetch handler anyway.
 
 const CACHE_NAME = '__CACHE_NAME__';
 const PRECACHE = __PRECACHE__;
+//: models and images: whatever makes the cache heavy
+const HEAVY = /\.(glb|png|jpg|jpeg|webp)$/i;
+const SHELL = PRECACHE.filter((url) => !HEAVY.test(url));
+const MEDIA = PRECACHE.filter((url) => HEAVY.test(url));
+
+const FETCH_OPTIONS = {
+  cache: 'reload',
+  // CORS mode, because that is how the page asks for its own bundle: Vite emits
+  // `<script type=module crossorigin>`, and a server answering with
+  // `Vary: Origin` otherwise refuses to match what was stored here.
+  mode: 'cors',
+  credentials: 'same-origin',
+};
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    // Precache in CORS mode, which is how the page asks for its own bundle: Vite
-    // emits `<script type=module crossorigin>` and matching `modulepreload`
-    // links, and a static server answers those with `Vary: Origin`. Fetching
-    // without an Origin header here stored responses that the page's requests
-    // then could not match — the app booted to an empty loading overlay with no
-    // network while every URL was demonstrably present in the cache.
-    const results = await Promise.allSettled(PRECACHE.map((url) => cache.add(
-      new Request(url, { cache: 'reload', mode: 'cors', credentials: 'same-origin' }),
-    )));
+    const results = await Promise.allSettled(
+      SHELL.map((url) => cache.add(new Request(url, FETCH_OPTIONS))),
+    );
     const failed = results.filter((result) => result.status === 'rejected').length;
-    await report({ type: 'precache', cached: PRECACHE.length - failed, total: PRECACHE.length });
+    await report({
+      type: 'shell',
+      cached: SHELL.length - failed,
+      total: SHELL.length,
+      media: MEDIA.length,
+    });
   })());
 });
 
@@ -40,9 +59,44 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
+/** Fetch the models and thumbnails one by one, reporting progress as it goes. */
+async function warmMedia() {
+  const cache = await caches.open(CACHE_NAME);
+  let done = 0;
+  for (const url of MEDIA) {
+    try {
+      const already = await cache.match(url, { ignoreSearch: true, ignoreVary: true });
+      if (!already) await cache.add(new Request(url, FETCH_OPTIONS));
+      done += 1;
+    } catch (error) {
+      // One failure must not stop the rest: what arrived is still usable offline,
+      // and the next visit picks up where this one left off.
+    }
+    await report({ type: 'warming', cached: done, total: MEDIA.length });
+  }
+  await report({ type: 'warm', cached: done, total: MEDIA.length });
+  return done;
+}
+
+let warming = null;
+
 self.addEventListener('message', (event) => {
   if (event.data === 'status') {
-    event.waitUntil(report({ type: 'ready', total: PRECACHE.length }));
+    event.waitUntil((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const keys = await cache.keys();
+      const have = MEDIA.filter((url) => keys.some((request) => request.url.endsWith(url.slice(2)))).length;
+      await report({
+        type: have >= MEDIA.length ? 'warm' : 'ready',
+        cached: have,
+        total: MEDIA.length,
+      });
+    })());
+    return;
+  }
+  if (event.data === 'warm') {
+    warming = warming ?? warmMedia();
+    event.waitUntil(warming);
   }
 });
 

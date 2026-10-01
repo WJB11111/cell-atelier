@@ -14,8 +14,10 @@ export default defineConfig({
   server: {
     watch: {
       // Editors and tools that write through a temporary sibling file would
-      // otherwise make the watcher trip over a locked path on Windows.
-      ignored: ['**/.*.tmpdir/**', '**/*.tmp'],
+      // otherwise make the watcher trip over a locked path on Windows — and take
+      // the whole dev server down with it. Such a directory can be named anything
+      // ending in `.tmpdir`, so match that rather than a leading dot.
+      ignored: ['**/*.tmpdir/**', '**/*.tmp', '**/.~*'],
     },
   },
   build: {

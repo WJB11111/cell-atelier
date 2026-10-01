@@ -1170,21 +1170,32 @@ async function registerOffline() {
     const registration = await navigator.serviceWorker.register(`${assetBase}sw.js`, { scope: assetBase });
     const show = (message) => {
       if (!message || message.type === undefined) return;
-      if (message.type === 'precache' && message.cached < message.total) {
-        setOfflineBadge(`离线缓存 ${message.cached}/${message.total}`, 'partial');
-      } else {
-        setOfflineBadge('离线可用', 'ready');
+      if (message.type === 'warming') {
+        setOfflineBadge(`离线缓存 ${message.cached}/${message.total}`, 'pending');
+        return;
       }
+      if (message.type === 'ready' && message.cached !== undefined && message.cached < message.total) {
+        setOfflineBadge(`离线缓存 ${message.cached}/${message.total}`, 'partial');
+        return;
+      }
+      setOfflineBadge('离线可用', 'ready');
     };
     navigator.serviceWorker.addEventListener('message', (event) => show(event.data));
-    // A worker installed by an earlier visit already holds the whole cache.
+    // A worker installed by an earlier visit already holds the shell; ask what it
+    // has, and let it fetch the models in the background.
     navigator.serviceWorker.controller?.postMessage('status');
     if (registration.waiting) {
       setOfflineBadge('有新版本，刷新后生效', 'pending');
       return;
     }
-    if (!navigator.serviceWorker.controller) {
-      registration.addEventListener('updatefound', () => setOfflineBadge('正在缓存…', 'pending'));
+    const warm = () => (registration.active ?? navigator.serviceWorker.controller)?.postMessage('warm');
+    if (registration.active) warm();
+    else {
+      // On the very first visit the page is not controlled yet, so the shell is
+      // still installing. Warm once it is, and again after a moment in case that
+      // signal was missed.
+      navigator.serviceWorker.addEventListener('controllerchange', warm, { once: true });
+      setTimeout(warm, 4000);
     }
   } catch (error) {
     // Offline support is a bonus: a failure here must not disturb the viewer.
