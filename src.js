@@ -1115,7 +1115,10 @@ function buildShareSection() {
         target.textContent = '二维码请用 npm run share -- --base <网址> 生成。';
         return;
       }
-      const same = data.base === base;
+      // Hosts are case-insensitive, and GitHub's API reports the owner's casing
+      // while the browser lower-cases it — comparing literally made the page
+      // claim its own QR codes pointed somewhere else.
+      const same = data.base.toLowerCase() === base.toLowerCase();
       target.textContent = same
         ? `二维码指向 ${data.base}`
         : `二维码指向 ${data.base}；当前地址是 ${base}，请以链接文本为准。`;
