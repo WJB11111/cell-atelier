@@ -171,35 +171,46 @@ svg.focus-leader path { stroke-width: 1.25; }
 #organelles.quiz-mode button { opacity: 0.55; }
 #organelles.quiz-mode button:hover { opacity: 1; }
 
-/* Same-scale figure. Widths come from specimens.js, so the drawing cannot drift
-   away from the declared sizes; the row is bottom-aligned like a line-up. */
+/* Same-scale lineup. Each silhouette is an SVG measured in micrometres, so the
+   only thing CSS decides is the single pixels-per-micron factor. */
 .size-section { padding: 3.2rem var(--pad-x) 2.6rem; border-top: 1px solid var(--rule); }
 .size-figure { overflow-x: auto; padding-bottom: 0.6rem; }
 .size-row {
   display: flex;
   align-items: flex-end;
-  gap: 1.5rem;
-  min-height: 320px;
-  padding: 1.4rem 0 0.4rem;
+  gap: 2.2rem;
+  min-height: 260px;
+  padding: 1.6rem 0 0.6rem;
+  border-bottom: 1px solid var(--rule);
 }
 .size-item { display: flex; flex-direction: column; align-items: center; gap: 0.7rem; margin: 0; flex: 0 0 auto; }
-.size-shape {
-  display: block;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, #fff 0%, var(--cell-color, #b9a) 58%, color-mix(in oklab, var(--cell-color, #b9a) 74%, #5c4a55) 100%);
-  box-shadow: 0 6px 18px rgba(80, 62, 70, 0.12);
-}
-.size-plant-cell .size-shape,
-.size-cyanobacterium .size-shape,
-.size-sperm-cell .size-shape { border-radius: 22%; }
-.size-sperm-cell .size-shape { border-radius: 42% 42% 30% 30%; }
+.size-item svg { display: block; overflow: visible; }
 .size-item figcaption { text-align: center; font-size: 0.76rem; line-height: 1.45; color: var(--ink-soft); max-width: 12rem; }
 .size-item figcaption b { display: block; color: var(--ink); font-weight: 600; }
-.size-item figcaption span { display: block; color: var(--ink-faint); font-size: 0.72rem; }
+.size-item figcaption span { display: block; color: var(--ink-faint); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
 .size-item figcaption em { display: block; margin-top: 0.25rem; font-style: normal; font-size: 0.68rem; color: var(--ink-faint); }
-.size-ruler { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; padding-bottom: 0.2rem; }
-.size-ruler i { display: block; height: 8px; border: 1px solid var(--ink-faint); border-top: none; }
-.size-ruler span { font-size: 0.7rem; color: var(--ink-faint); }
+
+/* the anatomy: flat fills from the specimen palette, one soft tone each */
+.size-outline { fill: color-mix(in oklab, var(--cell-color) 82%, #fff); stroke: color-mix(in oklab, var(--cell-color) 60%, #5c4a55); stroke-width: 0.28; }
+.size-outline-plant { fill: color-mix(in oklab, var(--cell-color) 34%, #fff); }
+.size-wall { fill: none; stroke: color-mix(in oklab, var(--cell-color) 85%, #46512f); stroke-width: 0.75; }
+.size-vacuole { fill: color-mix(in oklab, #64a8b0 42%, #fff); stroke: color-mix(in oklab, #64a8b0 70%, #3c5a5e); stroke-width: 0.25; }
+.size-chloroplast { fill: color-mix(in oklab, #608443 74%, #fff); stroke: color-mix(in oklab, #608443 88%, #37471f); stroke-width: 0.2; }
+.size-nucleus { fill: color-mix(in oklab, #85519f 78%, #fff); stroke: color-mix(in oklab, #85519f 92%, #3d2450); stroke-width: 0.22; }
+.size-nucleolus { fill: #633d78; }
+.size-organelle { fill: color-mix(in oklab, #c96a4e 76%, #fff); stroke: #a04f38; stroke-width: 0.16; }
+.size-dot, .size-granule { fill: color-mix(in oklab, #b3619c 70%, #fff); }
+.size-lobe { fill: color-mix(in oklab, #85519f 72%, #fff); stroke: #633d78; stroke-width: 0.2; }
+.size-process, .size-tail { fill: none; stroke: color-mix(in oklab, var(--cell-color) 80%, #5c4a55); stroke-width: 0.5; stroke-linecap: round; }
+/* a dashed stub means "the real cell continues; this part is not drawn to scale" */
+.size-schematic { fill: none; stroke: color-mix(in oklab, var(--cell-color) 62%, #6c6470); stroke-width: 0.4; stroke-linecap: round; stroke-dasharray: 1 0.9; }
+.size-dimple { fill: none; stroke: color-mix(in oklab, var(--cell-color) 55%, #6b4a4a); stroke-width: 0.22; }
+.size-acrosome { fill: color-mix(in oklab, #c39b45 70%, #fff); }
+.size-thylakoid { fill: none; stroke: color-mix(in oklab, #378b82 80%, #1f4a46); stroke-width: 0.22; stroke-linecap: round; }
+.size-rule { fill: none; stroke: var(--ink-faint); stroke-width: 0.14; }
+.size-ruler { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding-bottom: 0.2rem; }
+.size-ruler svg { display: block; }
+.size-ruler span { font-size: 0.7rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 .size-caption { margin: 1.2rem 0 0; max-width: 62ch; font-size: 0.82rem; line-height: 1.7; color: var(--ink-soft); }
 
 /* Side-by-side comparison. The panel sits under the observation modes and states
