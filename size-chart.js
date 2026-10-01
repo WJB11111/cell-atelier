@@ -9,15 +9,10 @@
 // per-specimen scaling. If a render is missing, the SVG silhouette below stands in
 // — drawn in a micrometre coordinate system, so it is to scale too.
 
+import { LINEUP_MICRONS } from './lineup-scale.js';
 import { SHAPES } from './size-shapes.js';
 
 const PIXELS_PER_MICRON = 5.2;
-//: what the picture leaves out, for the two specimens whose measured part is only
-//: a fraction of the real cell — the renders show that part alone
-const CROPPED = {
-  neuron: '图中只画胞体',
-  'sperm-cell': '图中只画头部',
-};
 //: every silhouette stands on this ground line, in µm
 const BASELINE = 22;
 const CANVAS_HEIGHT = 26;
@@ -50,20 +45,26 @@ export function createSizeChart(container, specimens) {
     item.className = `size-item size-${id}`;
     item.dataset.cell = id;
 
-    const pixels = size.real * PIXELS_PER_MICRON;
+    // the picture is as wide as the specimen really is, which for two of them is
+    // wider than the structure they are measured by
+    const microns = LINEUP_MICRONS[id] ?? size.real;
+    const pixels = microns * PIXELS_PER_MICRON;
     const img = document.createElement('img');
     img.src = `${import.meta.env.BASE_URL}lineup/${id}.png`;
     img.width = Math.round(pixels);
-    img.alt = `${cell.zh}，按真实大小绘制，宽 ${size.real} ${size.unit}`;
+    img.alt = `${cell.zh}，按真实大小绘制，整体宽 ${microns} ${size.unit}`;
     img.style.setProperty('--cell-color', cell.color);
     img.addEventListener('error', () => {
       img.replaceWith(silhouette(id, cell, size));
     }, { once: true });
     item.append(img);
 
-    const crop = CROPPED[id] ? `<i>${CROPPED[id]}</i>` : '';
+    // "20 µm" is the structure the specimen is measured by; where the whole cell
+    // is wider, say so rather than letting the picture imply 20 µm across
+    const whole = microns > size.real * 1.05
+      ? `<i>整个细胞 ${Number(microns.toFixed(1))} ${size.unit}</i>` : '';
     const caption = document.createElement('figcaption');
-    caption.innerHTML = `<b>${cell.zh}</b><span>${size.real} ${size.unit}</span>${crop}`
+    caption.innerHTML = `<b>${cell.zh}</b><span>${size.real} ${size.unit}</span>${whole}`
       + (size.note ? `<em>${size.note}</em>` : '');
     item.append(caption);
     row.append(item);

@@ -306,10 +306,18 @@ test('every comparable specimen has its lineup render', () => {
   assert.match(renderer, /PIXELS_PER_MICRON/, 'the renderer must fix one scale for every specimen');
   assert.match(renderer, /view_layer\.update\(\)/,
     'Blender caches matrix_world; without an update the frame is computed against a stale camera');
-  assert.match(renderer, /CROP_TO_STRUCTURE/,
-    'the two specimens whose processes run off any true-scale frame must render the measured part only');
-  assert.match(renderer, /sensor_fit/,
-    'ortho_scale has to keep meaning frame width, or tall pictures break the micrometre mapping');
+  assert.match(renderer, /json\.dumps/,
+    'each render must report how many micrometres wide its picture is');
+  const scale = readFileSync(path.join(projectRoot, 'lineup-scale.js'), 'utf8');
+  for (const [id, cell] of Object.entries(specimens)) {
+    if (!cell.size) continue;
+    assert.match(scale, new RegExp(`"${id}":`),
+      `${id} is missing from lineup-scale.js — run: npm run lineup`);
+  }
+  assert.match(scale, /"neuron": (?!20\b)/,
+    'the neuron picture holds its processes, so it must be wider than the soma alone');
+  assert.match(scale, /"sperm-cell": (?!4\.5\b)/,
+    'the sperm picture holds its flagellum, so it must be wider than the head alone');
 });
 
 test('the share of structures that are membranes is stated, not implied', () => {
