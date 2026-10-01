@@ -1174,29 +1174,43 @@ async function registerOffline() {
         setOfflineBadge(`离线缓存 ${message.cached}/${message.total}`, 'pending');
         return;
       }
-      if (message.type === 'ready' && message.cached !== undefined && message.cached < message.total) {
-        setOfflineBadge(`离线缓存 ${message.cached}/${message.total}`, 'partial');
+      if (message.type === 'warm') {
+        setOfflineBadge('离线可用', 'ready');
         return;
       }
-      setOfflineBadge('离线可用', 'ready');
+      // "ready" only means the shell is in: the models are still missing, so the
+      // page must not claim offline use yet — that is the state a teacher would
+      // rely on, unplug the network, and find an empty viewer.
+      if (message.cached !== undefined) {
+        setOfflineBadge(`离线缓存 ${message.cached}/${message.total}`, 'pending');
+      }
     };
     navigator.serviceWorker.addEventListener('message', (event) => show(event.data));
-    // A worker installed by an earlier visit already holds the shell; ask what it
-    // has, and let it fetch the models in the background.
-    navigator.serviceWorker.controller?.postMessage('status');
     if (registration.waiting) {
       setOfflineBadge('有新版本，刷新后生效', 'pending');
-      return;
     }
-    const warm = () => (registration.active ?? navigator.serviceWorker.controller)?.postMessage('warm');
-    if (registration.active) warm();
-    else {
-      // On the very first visit the page is not controlled yet, so the shell is
-      // still installing. Warm once it is, and again after a moment in case that
-      // signal was missed.
-      navigator.serviceWorker.addEventListener('controllerchange', warm, { once: true });
-      setTimeout(warm, 4000);
-    }
+
+    // Ask whichever worker is current to fetch the models in the background. The
+    // message has to keep being offered: on a first visit the worker is still
+    // installing, and after an update it waits until the last tab closes.
+    const warm = () => {
+      const worker = navigator.serviceWorker.controller ?? registration.active ?? registration.waiting;
+      try {
+        worker?.postMessage('warm');
+      } catch (error) {
+        // a worker that has not finished installing cannot take messages yet
+      }
+    };
+    warm();
+    registration.addEventListener('updatefound', () => {
+      const installing = registration.installing;
+      installing?.addEventListener('statechange', () => {
+        if (installing.state === 'activated') warm();
+      });
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', warm);
+    setTimeout(warm, 3000);
+    setTimeout(warm, 12000);
   } catch (error) {
     // Offline support is a bonus: a failure here must not disturb the viewer.
     console.warn('offline support unavailable', error);
