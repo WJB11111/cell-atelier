@@ -1,5 +1,9 @@
 # Cell Atelier · 细胞标本室（复刻版）
 
+[![部署状态](https://github.com/WJB11111/cell-atelier/actions/workflows/deploy.yml/badge.svg)](https://github.com/WJB11111/cell-atelier/actions/workflows/deploy.yml)
+[![在线体验](https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%93%E9%AA%8C-wjb11111.github.io%2Fcell--atelier-2f6f4e)](https://wjb11111.github.io/cell-atelier/)
+[![许可](https://img.shields.io/badge/license-MIT-6b6b6b)](LICENSE)
+
 **面向高中生物学习的交互式 3D 细胞标本。** 使用 Blender 程序化构建模型，通过 Three.js 在浏览器中旋转、缩放和点选结构，把细胞形态与中文结构笔记放在同一张学习界面中。
 
 当前收录 **7 类标本**（动物细胞、植物叶肉细胞、蓝细菌、中性粒细胞、有髓神经元、成熟红细胞、人类精子）· 中文结构笔记 · 植物细胞三种视图 · 可分享链接 · GLB 下载 · MIT 开源

@@ -1149,6 +1149,59 @@ function buildShareSection() {
   }
 }
 
+// ---------------------------------------------------------------- install hint
+// "Installable" is only true of the production build — dev has no service worker —
+// and only worth offering until it has been done. When Chrome offers an install
+// prompt, the footer becomes the button instead of telling people to hunt through
+// a menu.
+
+let installPrompt = null;
+
+function updateInstallHint() {
+  const hint = document.querySelector('#install-hint');
+  if (!hint) return;
+  const installed = window.matchMedia('(display-mode: standalone)').matches;
+  hint.replaceChildren();
+  hint.onclick = null;
+  if (installed) {
+    hint.textContent = '已安装为应用 · 可离线使用';
+    hint.dataset.state = 'installed';
+    return;
+  }
+  if (!import.meta.env.PROD || !('serviceWorker' in navigator)) {
+    hint.textContent = '动物细胞 / 可交互模型';
+    hint.dataset.state = 'plain';
+    return;
+  }
+  if (installPrompt) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = '⤓ 安装为应用（可离线使用）';
+    hint.append(button);
+    hint.dataset.state = 'ready';
+    hint.onclick = async () => {
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      installPrompt = null;
+      updateInstallHint();
+    };
+    return;
+  }
+  hint.textContent = '可在浏览器菜单选择「安装」或「添加到主屏幕」，之后可离线使用';
+  hint.dataset.state = 'hint';
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  installPrompt = event;
+  updateInstallHint();
+});
+
+window.addEventListener('appinstalled', () => {
+  installPrompt = null;
+  updateInstallHint();
+});
+
 // ---------------------------------------------------------------- offline
 // The production build ships a service worker that precaches the shell and every
 // model, so a lesson keeps working when the projector's network does not. Dev
@@ -1192,6 +1245,8 @@ async function registerOffline() {
     if (registration.waiting) {
       setOfflineBadge('有新版本，刷新后生效', 'pending');
     }
+    // an install is also worth offering once the shell is cached
+    updateInstallHint();
 
     // Ask whichever worker is current to fetch the models in the background. The
     // message has to keep being offered: on a first visit the worker is still
@@ -1399,6 +1454,7 @@ if (initialState.select && specimens[activeCell].keys.includes(initialState.sele
 }
 if (initialState.practice && !compareWith) startPractice();
 if (!firstVisit()) showFirstRun(initialState);
+updateInstallHint();
 registerOffline();
 
 // Read-only snapshot of the viewer state, used by tools/inspect-page.mjs and

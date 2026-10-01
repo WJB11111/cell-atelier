@@ -279,6 +279,20 @@ test('the share kit is generated against a real base, not a placeholder', () => 
     'a deployment build should regenerate the codes for its own URL');
 });
 
+test('the README advertises the deployment and the page offers installation', () => {
+  const readme = readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
+  assert.match(readme, /actions\/workflows\/deploy\.yml\/badge\.svg/,
+    'the README should show whether the deployment is green');
+  assert.match(readme, /wjb11111\.github\.io\/cell-atelier/,
+    'the README should link the live site');
+  assert.match(page, /id="install-hint"/, 'the footer should offer to install the app');
+  const source = readFileSync(path.join(projectRoot, 'src.js'), 'utf8');
+  assert.match(source, /beforeinstallprompt/,
+    'use the browser install prompt when it is offered rather than pointing at a menu');
+  assert.match(source, /display-mode: standalone/,
+    'an installed copy should say so instead of offering to install again');
+});
+
 test('the share of structures that are membranes is stated, not implied', () => {
   // "no structure in the model" must never read as "not present in the cell".
   for (const [id, cell] of Object.entries(specimens)) {

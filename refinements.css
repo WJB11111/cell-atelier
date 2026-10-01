@@ -365,6 +365,23 @@ svg.focus-leader path { stroke-width: 1.25; }
 .firstrun button:hover { background: #fff; }
 @media print { .firstrun { display: none !important; } }
 
+/* Footer install hint: a button when the browser offers to install, a sentence
+   otherwise, and nothing to add once it is already running as an app. */
+#install-hint[data-state="ready"] button {
+  padding: 0.25rem 0.6rem;
+  font: inherit;
+  font-size: 0.72rem;
+  color: var(--ink);
+  background: var(--panel-bright);
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  cursor: pointer;
+}
+#install-hint[data-state="ready"] button:hover { background: #fff; }
+#install-hint[data-state="installed"] { color: #4d7a45; }
+#install-hint[data-state="hint"] { color: var(--ink-faint); }
+@media print { #install-hint { display: none !important; } }
+
 .structure-labels { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
 .structure-labels svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .structure-labels svg path { fill: none; stroke: var(--label-line); stroke-width: 1; stroke-linecap: round; }
