@@ -52,6 +52,11 @@ export function createFocusView({ renderer, scene, camera, controls, mount }) {
   let lastScan = 0;
   let tween = null;
   let englishName = '';
+  //: true while the camera is actually changing, so view-dependent work can wait
+  let moving = false;
+  //: how many times the expensive anchor search has run — the thing that made
+  //: dragging feel heavy, so it is worth being able to see
+  let anchorsFound = 0;
   //: previous camera pose, to tell "the user is moving" from "the view settled"
   const lastCamera = new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN);
   const lastTarget = new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN);
@@ -130,6 +135,7 @@ export function createFocusView({ renderer, scene, camera, controls, mount }) {
    * the centre of a merged multi-part structure usually sits in empty space.
    */
   function findAnchor() {
+    anchorsFound += 1;
     camera.updateMatrixWorld();
     const candidates = [];
     for (const object of chosen) {
@@ -162,7 +168,14 @@ export function createFocusView({ renderer, scene, camera, controls, mount }) {
 
   function drawLabel(now) {
     if (!chosen.length) return;
-    if (anchorStale && now - lastScan > 100) {
+    // Re-anchoring samples the structure and raycasts against the whole scene —
+    // dozens of intersection tests against six-figure triangle counts. Doing that
+    // while the camera is moving put a hitch in every hundred milliseconds of a
+    // drag, and only when something was selected. The anchor is a point in world
+    // space, so it can simply stay put while the view moves: the label is
+    // reprojected every frame either way, and a better anchor is chosen as soon as
+    // the view settles.
+    if (anchorStale && !moving && now - lastScan > 100) {
       findAnchor();
       lastScan = now;
       anchorStale = false;
@@ -225,6 +238,9 @@ export function createFocusView({ renderer, scene, camera, controls, mount }) {
       composer.setSize(width, height);
       anchorStale = true;
     },
+    stats() {
+      return { anchors: anchorsFound, moving, outlineOn: outline.enabled };
+    },
     render(now = performance.now()) {
       if (tween) {
         const progress = Math.min(1, (now - tween.start) / TWEEN_MS);
@@ -241,11 +257,11 @@ export function createFocusView({ renderer, scene, camera, controls, mount }) {
       // one. It is therefore only drawn once the camera has settled: while the
       // user is moving, the selection is still obvious from the emissive tint
       // and from everything else fading back.
-      const moved = camera.position.distanceToSquared(lastCamera) > 1e-7
+      moving = camera.position.distanceToSquared(lastCamera) > 1e-7
         || controls.target.distanceToSquared(lastTarget) > 1e-9;
       lastCamera.copy(camera.position);
       lastTarget.copy(controls.target);
-      outline.enabled = chosen.length > 0 && !tween && !moved;
+      outline.enabled = chosen.length > 0 && !tween && !moving;
 
       composer.render();
       drawLabel(now);

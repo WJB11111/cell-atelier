@@ -544,34 +544,83 @@ function meshesOf(key, cellId = activeCell) {
   return meshes.filter((mesh) => mesh.userData.cell === cellId && matches(idOf(mesh), key));
 }
 
-function updateScaleBar() {
+// The bar is recomputed at most a few times a second and only writes to the DOM
+// when a value actually changed: it used to run three querySelectors and three
+// unconditional writes on every frame, which is invalidate-and-relayout work for
+// a number that changes a few times per zoom.
+const SCALE_BAR_INTERVAL = 90;
+const scaleBarParts = {};
+const scaleBarShown = { width: null, value: null, label: null, note: null, hidden: null };
+let lastScaleBar = -Infinity;
+const scaleScratch = {
+  centre: new THREE.Vector3(),
+  right: new THREE.Vector3(),
+  projected: new THREE.Vector3(),
+  edge: new THREE.Vector3(),
+};
+
+function updateScaleBar(now = performance.now(), force = false) {
   const bar = dom.scaleBar;
   if (!scaleInfo) {
-    bar.hidden = true;
+    if (scaleBarShown.hidden !== true) {
+      bar.hidden = true;
+      scaleBarShown.hidden = true;
+    }
     return;
   }
-  const centre = controls.target.clone();
-  const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+  if (!force && now - lastScaleBar < SCALE_BAR_INTERVAL) return;
+  lastScaleBar = now;
+
+  scaleBarParts.value ??= bar.querySelector('b');
+  scaleBarParts.label ??= bar.querySelector('span');
+  scaleBarParts.note ??= bar.querySelector('em');
+
+  const { centre, right, projected, edge } = scaleScratch;
+  centre.copy(controls.target);
+  right.setFromMatrixColumn(camera.matrixWorld, 0).normalize();
   const width = dom.mount.clientWidth;
-  const projected = centre.clone().project(camera);
+  projected.copy(centre).project(camera);
   if (projected.z > 1) {
-    bar.hidden = true;
+    if (scaleBarShown.hidden !== true) {
+      bar.hidden = true;
+      scaleBarShown.hidden = true;
+    }
     return;
   }
   for (const step of SCALE_STEPS) {
     const world = step / scaleInfo.perUnit;
-    const edge = centre.clone().addScaledVector(right, world).project(camera);
-    const pixels = Math.abs(edge.x - projected.x) * (width / 2);
+    edge.copy(centre).addScaledVector(right, world).project(camera);
+    const pixels = Math.round(Math.abs(edge.x - projected.x) * (width / 2));
     if (pixels >= 56 && pixels <= 230) {
-      bar.hidden = false;
-      bar.style.width = `${Math.round(pixels)}px`;
-      bar.querySelector('b').textContent = `${step} ${scaleInfo.unit}`;
-      bar.querySelector('span').textContent = scaleInfo.label;
-      bar.querySelector('em').textContent = scaleInfo.note ?? '';
+      if (scaleBarShown.hidden !== false) {
+        bar.hidden = false;
+        scaleBarShown.hidden = false;
+      }
+      if (scaleBarShown.width !== pixels) {
+        bar.style.width = `${pixels}px`;
+        scaleBarShown.width = pixels;
+      }
+      const value = `${step} ${scaleInfo.unit}`;
+      if (scaleBarShown.value !== value) {
+        scaleBarParts.value.textContent = value;
+        scaleBarShown.value = value;
+      }
+      if (scaleBarShown.label !== scaleInfo.label) {
+        scaleBarParts.label.textContent = scaleInfo.label;
+        scaleBarShown.label = scaleInfo.label;
+      }
+      const note = scaleInfo.note ?? '';
+      if (scaleBarShown.note !== note) {
+        scaleBarParts.note.textContent = note;
+        scaleBarShown.note = note;
+      }
       return;
     }
   }
-  bar.hidden = true;
+  if (scaleBarShown.hidden !== true) {
+    bar.hidden = true;
+    scaleBarShown.hidden = true;
+  }
 }
 
 // ---------------------------------------------------------------- comparison
@@ -693,6 +742,7 @@ async function setComparison(cellId, { instant = false } = {}) {
     layoutComparison();
     buildNavigation();
     scaleInfo = measureScale();
+    updateScaleBar(performance.now(), true);
     frameComparison(instant);
     dom.title.innerHTML = `${specimens[activeCell].en} × ${specimens[cellId].en}`
       + `<span>${specimens[activeCell].zh} 与 ${specimens[cellId].zh}</span>`;
@@ -1045,7 +1095,7 @@ async function loadCell(id) {
     buildNavigation();
     reset();
     scaleInfo = measureScale();
-    updateScaleBar();
+    updateScaleBar(performance.now(), true);
     loading.hidden = true;
   } catch (error) {
     if (version === loadVersion) {
@@ -1424,8 +1474,8 @@ new ResizeObserver(() => {
 
 renderer.setAnimationLoop((now) => {
   focusView.render(now);
-  viewLabels.render();
-  updateScaleBar();
+  viewLabels.render(now);
+  updateScaleBar(now);
 });
 
 buildCatalogue();
@@ -1475,6 +1525,7 @@ window.cellAtelier = {
       envelope: envelopeKeys(),
       shellsLoaded: meshes.some((mesh) => mesh.userData.wholeShell),
       scale: scaleInfo,
+      focus: focusView.stats(),
       hideMembrane,
       isolate,
       labelsEnabled,

@@ -60,11 +60,21 @@ export function createViewLabels(mount, camera, onSelect) {
     layer.hidden = !value;
   }
 
-  function render() {
+  // Labels are repositioned at a lower rate than the renderer runs and only write
+  // when a position actually changed: transform and path writes on a dozen
+  // elements every frame are pure layout churn while a cell is being dragged.
+  const LABEL_INTERVAL = 40;
+  let lastRender = -Infinity;
+  const written = new Map();
+
+  function render(now = performance.now()) {
     if (!enabled) return;
+    if (now - lastRender < LABEL_INTERVAL) return;
+    lastRender = now;
     const width = mount.clientWidth;
     const height = mount.clientHeight;
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    const viewBox = `0 0 ${width} ${height}`;
+    if (svg.getAttribute('viewBox') !== viewBox) svg.setAttribute('viewBox', viewBox);
 
     const sides = [[], []];
     for (const item of items) {
@@ -73,8 +83,9 @@ export function createViewLabels(mount, camera, onSelect) {
         && Math.abs(projected.z) < 1
         && Math.abs(projected.x) < 1
         && Math.abs(projected.y) < 1;
-      item.button.hidden = !onScreen;
-      item.path.style.display = onScreen ? '' : 'none';
+      if (item.button.hidden === onScreen) item.button.hidden = !onScreen;
+      const display = onScreen ? '' : 'none';
+      if (item.path.style.display !== display) item.path.style.display = display;
       if (onScreen) {
         sides[projected.x < 0 ? 0 : 1].push({
           ...item,
@@ -91,9 +102,18 @@ export function createViewLabels(mount, camera, onSelect) {
       side.forEach((item, position) => {
         const y = Math.max(135, (height - side.length * step) / 2) + position * step;
         const x = index ? width - SIDE_MARGIN : 12;
-        item.button.style.transform = `translate(${x}px, ${y}px)`;
-        const endX = index ? x : x + 86;
-        item.path.setAttribute('d', `M ${item.x} ${item.y} L ${endX} ${y + 15}`);
+        const transform = `translate(${x}px, ${y}px)`;
+        const path = `M ${item.x} ${item.y} L ${index ? x : x + 86} ${y + 15}`;
+        const previous = written.get(item.key) ?? {};
+        if (previous.transform !== transform) {
+          item.button.style.transform = transform;
+          previous.transform = transform;
+        }
+        if (previous.path !== path) {
+          item.path.setAttribute('d', path);
+          previous.path = path;
+        }
+        written.set(item.key, previous);
       });
     });
   }

@@ -27,11 +27,22 @@ import studio  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 #: pixels per micrometre, the same for every specimen
-PIXELS_PER_MICRON = 8.0
+PIXELS_PER_MICRON = 11.0
 #: structures that belong to the named one and follow its highlight
 AUXILIARY = {"nucleolus"}
-#: the studio's three-quarter view, matching the thumbnails
-VIEW_DIRECTION = Vector((0.42, -0.72, 0.55)).normalized()
+#: The same three-quarter-from-above angles the catalogue thumbnails use. A
+#: shallow side view turns the plant cell into a closed box and hides the section
+#: opening; these show the inside, which is the whole reason the models are cut.
+VIEW_DIRECTIONS = {
+    "animal-cell": (0.34, -0.62, 0.70),
+    "plant-cell": (0.36, -0.58, 0.72),
+    "cyanobacterium": (0.24, -0.55, 0.80),
+    "white-blood-cell": (0.30, -0.60, 0.74),
+    "neuron": (0.22, -0.62, 0.75),
+    "red-blood-cell": (0.26, -0.52, 0.82),
+    "sperm-cell": (0.30, -0.64, 0.71),
+}
+DEFAULT_DIRECTION = (0.32, -0.60, 0.73)
 
 
 def structure_objects(structure: str):
@@ -45,6 +56,7 @@ def structure_objects(structure: str):
 def main() -> None:
     argv = sys.argv[sys.argv.index("--") + 1:]
     blend, structure, real, target = argv[0], argv[1], float(argv[2]), Path(argv[3])
+    specimen = Path(blend).stem
 
     bpy.ops.wm.open_mainfile(filepath=str(ROOT / blend))
     objects = structure_objects(structure)
@@ -58,14 +70,15 @@ def main() -> None:
         points.extend(matrix @ vertex.co for vertex in obj.data.vertices)
     centre = sum(points, Vector((0, 0, 0))) / len(points)
 
-    studio.configure(bpy.context.scene, samples=36, transparent=True, world_strength=0.42)
+    studio.configure(bpy.context.scene, samples=56, transparent=True, world_strength=0.42)
     data = bpy.data.cameras.new("LineupCamera")
     data.type = "ORTHO"
     camera = bpy.data.objects.new("LineupCamera", data)
     bpy.context.scene.collection.objects.link(camera)
     bpy.context.scene.camera = camera
-    camera.location = centre + VIEW_DIRECTION * 40.0
-    camera.rotation_euler = (-VIEW_DIRECTION).to_track_quat("-Z", "Y").to_euler()
+    direction = Vector(VIEW_DIRECTIONS.get(specimen, DEFAULT_DIRECTION)).normalized()
+    camera.location = centre + direction * 40.0
+    camera.rotation_euler = (-direction).to_track_quat("-Z", "Y").to_euler()
     # Blender caches matrix_world: without this the projection below is computed
     # against a stale matrix and the centring correction is applied along the
     # world axes instead of the camera's. That silently aimed the neuron's frame at

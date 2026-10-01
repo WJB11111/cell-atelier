@@ -11,7 +11,7 @@
 
 import { SHAPES } from './size-shapes.js';
 
-const PIXELS_PER_MICRON = 6.6;
+const PIXELS_PER_MICRON = 5.2;
 //: every silhouette stands on this ground line, in µm
 const BASELINE = 22;
 const CANVAS_HEIGHT = 26;
