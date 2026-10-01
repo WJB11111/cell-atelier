@@ -1,0 +1,496 @@
+/* ==========================================================================
+   Cell Atelier · 细胞标本室 — refinements
+   Specimen accents, the view-mode panel, canvas overlays (callout, leader
+   lines, structure labels), motion, scrollbars, responsive rules and focus.
+   Loaded after style.css by src.js.
+   --------------------------------------------------------------------------
+   1. Accents  2. View modes  3. Overlays  4. Viewer states  5. Motion
+   6. Reduced motion  7. Scrollbars  8. Responsive  9. Focus
+   ========================================================================== */
+
+/* 1. Specimen accents ----------------------------------------------------- */
+:root {
+  --label-line: #cfc7b8;
+  --leader-line: #bdb4a3;
+  --mode-bg: #e5e0ef;
+  --mode-line: #d6cce6;
+  --mode-ink: #4f4370;
+  --row-tint: var(--accent-soft);
+  --row-line: var(--accent-line);
+  --row-ink: var(--accent-ink);
+}
+/* Plant specimens read green, in the panel and in the catalogue row. */
+.viewer[data-specimen="plant-cell"],
+button.specimen[data-cell="plant-cell"] {
+  --mode-bg: #dfe7d5;
+  --mode-line: #c8d7b3;
+  --mode-ink: #4a5c36;
+  --row-tint: #e3e8d9;
+  --row-line: #cfd9be;
+  --row-ink: #4a5c36;
+}
+button.specimen[data-cell="plant-cell"].selected,
+button.specimen[data-cell="plant-cell"][aria-pressed="true"] { background: var(--row-tint); border-color: var(--row-line); }
+.viewer[data-specimen="plant-cell"] .toolbar button[aria-pressed="true"] {
+  background: var(--row-tint);
+  border-color: var(--row-line);
+  color: var(--row-ink);
+}
+
+/* 2. View-mode panel ------------------------------------------------------ */
+/* Fills the empty column beside the title, right-aligned under the LIVE
+   badge, so it never covers the heading, the model or the left-hand labels. */
+.view-modes {
+  grid-area: 2 / 2 / 3 / 3;
+  align-self: start;
+  justify-self: end;
+  z-index: 5;
+  width: 196px;
+  padding: 0.8rem 0.85rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: 0 10px 26px rgba(47, 44, 34, 0.05);
+}
+.view-modes > p { font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-muted); }
+.view-modes > div[role="group"] { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.3rem; margin-top: 0.65rem; }
+.view-modes button {
+  min-height: 30px;
+  padding: 0.28rem 0.35rem;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--panel-bright);
+  font-size: 0.76rem;
+  line-height: 1.2;
+  color: var(--ink-body);
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.view-modes button:hover { border-color: var(--rule-strong); background: #fff; }
+.view-modes button[aria-pressed="true"] { background: var(--mode-bg); border-color: var(--mode-line); color: var(--mode-ink); }
+#labels { display: block; width: 100%; margin-top: 0.34rem; }
+#mode-note { display: block; margin-top: 0.55rem; font-size: 0.67rem; line-height: 1.6; color: var(--ink-faint); }
+
+/* 3. Canvas overlays ------------------------------------------------------ */
+/* All three layers live in the mount, take no layout space and are moved only
+   by the transform src.js writes inline. */
+.focus-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.45rem 0.8rem 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--panel-bright);
+  box-shadow: 0 8px 22px rgba(47, 44, 34, 0.07);
+  pointer-events: none;
+  will-change: transform;
+}
+.focus-label strong { font-family: var(--serif); font-weight: 400; font-size: 0.98rem; line-height: 1.3; color: var(--ink); }
+.focus-label span { font-family: var(--serif); font-style: italic; font-size: 0.74rem; color: var(--ink-quiet); }
+svg.focus-leader {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  color: var(--leader-line);           /* the markup strokes with currentColor */
+  pointer-events: none;
+}
+svg.focus-leader path { stroke-width: 1.25; }
+/* Real-world scale bar. It sits inside the canvas box, bottom left, and its
+   width is set from the projection each frame, so the number stays honest while
+   the camera moves. */
+#scale-bar {
+  position: absolute;
+  left: 22px;
+  bottom: 30px;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 56px;
+  max-width: 190px;
+  line-height: 1.25;
+}
+#scale-bar i {
+  display: block;
+  height: 8px;
+  border: 1px solid var(--ink-faint);
+  border-top: none;
+}
+#scale-bar b { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em; color: var(--ink); }
+#scale-bar span { font-size: 0.64rem; letter-spacing: 0.02em; color: var(--ink-soft); }
+#scale-bar em { font-size: 0.6rem; font-style: normal; color: var(--ink-faint); }
+.viewer[aria-busy="true"] #scale-bar { opacity: 0.4; }
+
+/* Identification drill. The panel sits where the observation modes do, so the
+   learner's eye stays in one column; the structure names dim to nudge answering
+   from the model, but stay clickable for keyboard users. */
+.quiz {
+  position: absolute;
+  top: 150px;
+  left: var(--pad-x);
+  z-index: 6;
+  width: min(280px, 42%);
+  padding: 0.85rem 0.95rem 0.95rem;
+  background: var(--panel-bright);
+  border: 1px solid var(--rule-strong);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(60, 48, 40, 0.08);
+}
+.quiz-count { margin: 0 0 0.35rem; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); }
+.quiz-prompt { margin: 0 0 0.5rem; font-size: 0.86rem; color: var(--ink-soft); }
+.quiz-prompt strong { display: block; margin-top: 0.2rem; font-family: var(--serif); font-size: 1.35rem; color: var(--ink); }
+.quiz-feedback { margin: 0; min-height: 1.2em; font-size: 0.76rem; line-height: 1.45; color: var(--ink-soft); }
+.quiz-feedback.right { color: #4d7a45; }
+.quiz-feedback.wrong { color: #a4503f; }
+.quiz-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.7rem; }
+.quiz-actions button,
+.quiz-again button {
+  padding: 0.32rem 0.7rem;
+  font: inherit;
+  font-size: 0.74rem;
+  color: var(--ink-soft);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.quiz-actions button:hover,
+.quiz-again button:hover { background: #fff; border-color: var(--rule-strong); color: var(--ink); }
+.quiz-summary { margin-top: 0.6rem; font-size: 0.78rem; line-height: 1.5; color: var(--ink-soft); }
+.quiz-summary p { margin: 0 0 0.35rem; }
+.quiz-summary b { color: var(--ink); font-size: 0.95rem; }
+.quiz-missed { color: var(--ink-faint); }
+#organelles.quiz-mode button { opacity: 0.55; }
+#organelles.quiz-mode button:hover { opacity: 1; }
+
+/* Same-scale figure. Widths come from specimens.js, so the drawing cannot drift
+   away from the declared sizes; the row is bottom-aligned like a line-up. */
+.size-section { padding: 3.2rem var(--pad-x) 2.6rem; border-top: 1px solid var(--rule); }
+.size-figure { overflow-x: auto; padding-bottom: 0.6rem; }
+.size-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+  min-height: 320px;
+  padding: 1.4rem 0 0.4rem;
+}
+.size-item { display: flex; flex-direction: column; align-items: center; gap: 0.7rem; margin: 0; flex: 0 0 auto; }
+.size-shape {
+  display: block;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #fff 0%, var(--cell-color, #b9a) 58%, color-mix(in oklab, var(--cell-color, #b9a) 74%, #5c4a55) 100%);
+  box-shadow: 0 6px 18px rgba(80, 62, 70, 0.12);
+}
+.size-plant-cell .size-shape,
+.size-cyanobacterium .size-shape,
+.size-sperm-cell .size-shape { border-radius: 22%; }
+.size-sperm-cell .size-shape { border-radius: 42% 42% 30% 30%; }
+.size-item figcaption { text-align: center; font-size: 0.76rem; line-height: 1.45; color: var(--ink-soft); max-width: 12rem; }
+.size-item figcaption b { display: block; color: var(--ink); font-weight: 600; }
+.size-item figcaption span { display: block; color: var(--ink-faint); font-size: 0.72rem; }
+.size-item figcaption em { display: block; margin-top: 0.25rem; font-style: normal; font-size: 0.68rem; color: var(--ink-faint); }
+.size-ruler { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; padding-bottom: 0.2rem; }
+.size-ruler i { display: block; height: 8px; border: 1px solid var(--ink-faint); border-top: none; }
+.size-ruler span { font-size: 0.7rem; color: var(--ink-faint); }
+.size-caption { margin: 1.2rem 0 0; max-width: 62ch; font-size: 0.82rem; line-height: 1.7; color: var(--ink-soft); }
+
+/* Side-by-side comparison. The panel sits under the observation modes and states
+   the common scale, because two cells in one viewport would otherwise invite the
+   wrong conclusion about their sizes. */
+.compare-panel {
+  position: absolute;
+  top: 150px;
+  left: var(--pad-x);
+  z-index: 6;
+  width: min(268px, 42%);
+  padding: 0.85rem 0.95rem 0.95rem;
+  background: var(--panel-bright);
+  border: 1px solid var(--rule-strong);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(60, 48, 40, 0.08);
+}
+.compare-label { margin: 0 0 0.55rem; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); }
+.compare-panel label { display: block; margin-bottom: 0.25rem; font-size: 0.74rem; color: var(--ink-soft); }
+.compare-panel select {
+  width: 100%;
+  padding: 0.32rem 0.5rem;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+.compare-note { margin: 0.6rem 0 0; font-size: 0.72rem; line-height: 1.5; color: var(--ink-faint); }
+.compare-actions { margin-top: 0.7rem; }
+.compare-actions button {
+  padding: 0.32rem 0.7rem;
+  font: inherit;
+  font-size: 0.74rem;
+  color: var(--ink-soft);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.compare-actions button:hover { background: #fff; border-color: var(--rule-strong); color: var(--ink); }
+#organelles button .only { display: block; margin-top: 0.15rem; font-size: 0.62rem; letter-spacing: 0.02em; color: var(--ink-faint); }
+#organelles button.solo { opacity: 0.72; }
+#compare[aria-pressed="true"] { background: var(--panel-bright); border-color: var(--rule-strong); color: var(--ink); }
+
+/* Offline state. Small and quiet: it answers "will this work in a room with no
+   wifi?", which is a question a teacher asks before the lesson, not during it. */
+.offline-badge {
+  position: absolute;
+  top: 74px;
+  right: var(--pad-x);
+  z-index: 5;
+  padding: 0.28rem 0.6rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  background: var(--panel-bright);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+}
+.offline-badge[data-state="ready"] { color: #4d7a45; border-color: #cfdcc6; }
+.offline-badge[data-state="partial"] { color: #a4503f; border-color: #e3c9c2; }
+.offline-badge[data-state="pending"] { color: var(--ink-faint); }
+
+/* Share section: one card per curated deep link, with its QR image and a copy
+   button. The images are generated by tools/make-share-kit.mjs against the
+   deployed base, so what a teacher prints matches what they send. */
+.share-section { padding: 3.2rem var(--pad-x) 2.4rem; border-top: 1px solid var(--rule); }
+.share-section code { font-size: 0.72rem; word-break: break-all; color: var(--ink-soft); }
+.share-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1.6rem;
+}
+.share-card {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  grid-template-rows: auto auto;
+  gap: 0.4rem 1rem;
+  padding: 1rem;
+  background: var(--panel-bright);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+.share-card img { grid-row: 1 / 3; width: 132px; height: 132px; border-radius: 6px; background: #fff; }
+.share-card h3 { margin: 0 0 0.3rem; font-family: var(--serif); font-size: 1.05rem; }
+.share-card p { margin: 0 0 0.5rem; font-size: 0.78rem; line-height: 1.6; color: var(--ink-soft); }
+.share-card code { display: block; margin-bottom: 0.5rem; }
+.share-copy {
+  justify-self: start;
+  padding: 0.3rem 0.7rem;
+  font: inherit;
+  font-size: 0.74rem;
+  color: var(--ink-soft);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.share-copy:hover { background: #fff; border-color: var(--rule-strong); color: var(--ink); }
+
+/* Teacher guide: the part a teacher prints or reads before a lesson. */
+.guide-section { padding: 3.2rem var(--pad-x) 2.6rem; border-top: 1px solid var(--rule); }
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.2rem 2rem;
+  margin-top: 1.6rem;
+}
+.guide-grid article { break-inside: avoid; }
+.guide-grid h3 { margin: 0 0 0.6rem; font-family: var(--serif); font-size: 1.1rem; }
+.guide-grid ol, .guide-grid ul { margin: 0; padding-left: 1.15rem; }
+.guide-grid li { margin-bottom: 0.4rem; font-size: 0.82rem; line-height: 1.7; color: var(--ink-soft); }
+.guide-grid a { color: inherit; text-decoration: underline; text-decoration-color: var(--rule-strong); text-underline-offset: 2px; }
+.guide-grid strong { color: var(--ink); font-weight: 600; }
+.guide-grid table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.guide-grid th, .guide-grid td { padding: 0.35rem 0.5rem 0.35rem 0; text-align: left; border-bottom: 1px solid var(--rule); }
+.guide-grid th { color: var(--ink-faint); font-weight: 400; font-size: 0.7rem; letter-spacing: 0.06em; }
+
+/* Printing: a teacher wants the words, not the canvas. */
+@media print {
+  .catalog, .viewer, .toolbar, .share-grid, .hint, .offline-badge,
+  .comparison-scroll, .size-figure { display: none !important; }
+  body { background: #fff; color: #000; }
+  .layout, .shell { display: block !important; }
+  section { border-top: 1px solid #ccc !important; padding: 1rem 0 !important; break-inside: avoid; }
+  .guide-grid { grid-template-columns: 1fr 1fr; }
+  a { text-decoration: none; color: #000; }
+  .guide-grid a::after { content: " (" attr(href) ")"; font-size: 0.7em; color: #555; }
+}
+
+/* First-run hint: three sentences, once, dismissible. */
+.firstrun {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 2rem;
+  text-align: left;
+  background: rgba(244, 241, 234, 0.94);
+  backdrop-filter: blur(2px);
+}
+.firstrun-title { margin: 0 0 0.4rem; font-family: var(--serif); font-size: 1.5rem; color: var(--ink); }
+.firstrun ol { max-width: 44ch; margin: 0 0 1rem; padding-left: 1.2rem; }
+.firstrun li { margin-bottom: 0.6rem; font-size: 0.9rem; line-height: 1.75; color: var(--ink-soft); }
+.firstrun li b { color: var(--ink); }
+.firstrun button {
+  padding: 0.5rem 1.1rem;
+  font: inherit;
+  font-size: 0.86rem;
+  color: var(--ink);
+  background: var(--panel-bright);
+  border: 1px solid var(--rule-strong);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.firstrun button:hover { background: #fff; }
+@media print { .firstrun { display: none !important; } }
+
+.structure-labels { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.structure-labels svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.structure-labels svg path { fill: none; stroke: var(--label-line); stroke-width: 1; stroke-linecap: round; }
+.structure-labels button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: 168px;
+  padding: 0.34rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  background: var(--panel-bright);
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--ink-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  pointer-events: auto;                /* the layer itself stays click-through */
+  will-change: transform;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.structure-labels button:hover { background: #fff; border-color: var(--rule-strong); color: var(--ink); }
+/* all-labels: many leaders at once, so they sit back a little. */
+#canvas.all-labels .structure-labels svg path { stroke-opacity: 0.75; }
+#canvas.all-labels .structure-labels button { background: rgba(251, 249, 242, 0.92); }
+
+/* 4. Viewer states -------------------------------------------------------- */
+.viewer[aria-busy="true"] { cursor: progress; }
+.viewer[aria-busy="true"] #canvas { opacity: 0.45; transition: opacity 0.3s ease; }
+.viewer[data-mode="focus"] .title,
+.viewer[data-mode="focus"] .view-badge { opacity: 0.55; transition: opacity 0.3s ease; }
+.viewer[data-view-mode="transparent"] #canvas.all-labels .structure-labels button { background: var(--panel-bright); }
+
+/* 5. Motion --------------------------------------------------------------- */
+@keyframes ca-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.82); } }
+@keyframes ca-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.view-badge span { animation: ca-pulse 3.2s ease-in-out infinite; }
+#loading:not([hidden]) { animation: ca-fade-in 0.24s ease-out both; }
+.viewer[aria-busy="true"] #loading::before { animation: ca-pulse 1.3s ease-in-out infinite; }
+
+/* 6. Reduced motion ------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .view-badge span,
+  .viewer[aria-busy="true"] #loading::before { animation: none; }
+}
+
+/* 7. Scrollbars ----------------------------------------------------------- */
+.catalog, .details, .comparison-scroll, #organelles, .cell-list { scrollbar-width: thin; scrollbar-color: var(--rule-strong) transparent; }
+.catalog::-webkit-scrollbar, .details::-webkit-scrollbar,
+.comparison-scroll::-webkit-scrollbar, #organelles::-webkit-scrollbar,
+.cell-list::-webkit-scrollbar { width: 9px; height: 9px; }
+.catalog::-webkit-scrollbar-thumb, .details::-webkit-scrollbar-thumb,
+.comparison-scroll::-webkit-scrollbar-thumb, #organelles::-webkit-scrollbar-thumb,
+.cell-list::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: 999px; background: var(--rule-strong); background-clip: content-box; }
+.catalog::-webkit-scrollbar-track, .details::-webkit-scrollbar-track,
+.comparison-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* 8. Responsive ----------------------------------------------------------- */
+/* ≤1180px — catalogue turns into a strip above; the notes move next to the
+   viewer so the 3D scene keeps its size. */
+@media (max-width: 1180px) {
+  :root { --col-details: 300px; }
+  main { grid-template-columns: minmax(0, 1fr) var(--col-details); grid-template-rows: auto minmax(0, 1fr); height: auto; max-height: none; }
+  .catalog { grid-area: 1 / 1 / 2 / 3; overflow: visible; padding: 1.25rem 1.6rem 1.1rem; border-bottom: 1px solid var(--rule-strong); }
+  .cell-list { flex-direction: row; flex-wrap: nowrap; gap: 0.3rem; overflow-x: auto; padding-bottom: 0.2rem; }
+  button.specimen { flex: 1 1 210px; width: auto; min-width: 205px; max-width: 300px; }
+  .compare-link { border-bottom: 0; padding: 0.7rem 0.2rem 0.2rem; }
+  #organelles { flex-direction: row; flex-wrap: nowrap; gap: 0.3rem; overflow-x: auto; padding-bottom: 0.3rem; }
+  #organelles button { flex: 0 0 auto; padding: 0.3rem 0.7rem 0.3rem 0.55rem; border-color: var(--rule); background: var(--panel-bright); }
+  .catalog-foot { margin-top: 1rem; }
+  .viewer { grid-area: 2 / 1 / 3 / 2; border-left: 0; }
+  .details { grid-area: 2 / 2 / 3 / 3; }
+}
+/* ≤900px — one column: strip, viewer (kept at 420px), notes underneath. The
+   view-mode panel becomes a band under the title instead of an overlay. */
+@media (max-width: 900px) {
+  :root { --pad-x: 1.15rem; }
+  main { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; height: auto; max-height: none; }
+  header { flex-wrap: wrap; gap: 0.3rem 1rem; padding: 1.05rem var(--pad-x) 0.95rem; }
+  .brand { font-size: 1.45rem; }
+  .tagline { font-size: 0.9rem; }
+  .edition { margin-left: 0; }
+  .catalog { grid-area: 1 / 1 / 2 / 2; padding: 1.1rem var(--pad-x) 1rem; }
+  .viewer {
+    grid-area: 2 / 1 / 3 / 2;
+    /* the canvas keeps a real height instead of collapsing into the leftover */
+    grid-template-rows: auto auto minmax(340px, 1fr) auto auto;  /* title · panel · canvas · hint · toolbar */
+    min-height: 420px;
+    padding: 1.2rem var(--pad-x) 1rem;
+    border-left: 0;
+    border-right: 0;
+    border-top: 1px solid var(--rule-strong);
+  }
+  .view-modes { grid-area: 2 / 1 / 3 / 3; width: auto; max-width: 340px; justify-self: start; margin-top: 0.9rem; }
+  #canvas { grid-area: 3 / 1 / 4 / 3; min-height: 340px; }
+  .hint { grid-area: 4 / 1 / 5 / 3; }
+  .toolbar { grid-area: 5 / 1 / 6 / 3; }
+  .details { grid-area: 3 / 1 / 4 / 2; overflow: visible; padding: 1.5rem var(--pad-x) 2rem; border-top: 1px solid var(--rule-strong); }
+  .comparison-heading { flex-direction: column; align-items: flex-start; gap: 0.9rem; padding-block: 1.9rem 1.1rem; }
+  .comparison-heading h2 { font-size: 1.55rem; }
+  .comparison-notes { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  footer { flex-direction: column; gap: 0.35rem; }
+}
+/* ≤620px — the last squeeze: smaller display type, stacked specimen chips. */
+@media (max-width: 620px) {
+  .title h1 { font-size: 2.05rem; }
+  .title h1 span { font-size: 0.9rem; letter-spacing: 0.22em; }
+  .cell-list { flex-wrap: wrap; }
+  button.specimen { flex: 1 1 100%; max-width: none; }
+  .toolbar button { padding: 0.4rem 0.7rem; font-size: 0.74rem; }
+  .comparison-scroll table { min-width: 640px; }
+}
+
+/* 9. Focus ---------------------------------------------------------------- */
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) { outline: none; }
+.comparison-scroll:focus-visible { outline-offset: -3px; }   /* the scroll region frames itself inwards */
+#organelles button:focus-visible,
+.structure-labels button:focus-visible { outline-offset: 1px; }
+::selection { background: var(--accent-soft); color: var(--accent-ink); }

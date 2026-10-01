@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="细胞标本室">
+  <rect width="64" height="64" rx="14" fill="#f4f1e8"/>
+  <circle cx="32" cy="33" r="20" fill="none" stroke="#a996c6" stroke-width="4"/>
+  <circle cx="32" cy="33" r="10" fill="#85519f"/>
+  <circle cx="34" cy="31" r="3.6" fill="#633d78"/>
+  <circle cx="18" cy="22" r="2.6" fill="#c96a4e"/>
+  <circle cx="47" cy="44" r="2.6" fill="#c96a4e"/>
+  <circle cx="48" cy="21" r="2" fill="#d4b15d"/>
+</svg>

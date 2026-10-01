@@ -1,0 +1,32 @@
+{
+  "name": "cell-atelier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Interactive 3D cell specimens for biology learning · Blender + Three.js · 高中生物细胞标本室（复刻版）",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test tests/*.test.js",
+    "check:models": "node tools/check-models.mjs",
+    "compress": "node tools/compress-glb.mjs public .compress-preview",
+    "share": "node tools/make-share-kit.mjs",
+    "pack": "npm run build && node tools/make-offline-pack.mjs"
+  },
+  "dependencies": {
+    "three": "^0.180.0",
+    "vite": "^7.1.0"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
+    "meshoptimizer": "^1.3.0",
+    "qrcode": "^1.5.4"
+  }
+}

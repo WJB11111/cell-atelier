@@ -1,0 +1,509 @@
+{
+ "animal-cell": {
+  "pairs": {
+   "er|fibers": {
+    "unintended": true,
+    "faces": 173,
+    "depth": 0.179,
+    "where": [
+     1.69,
+     2.19,
+     0.37
+    ]
+   },
+   "er|nucleus": {
+    "unintended": false,
+    "faces": 328,
+    "depth": 1.071,
+    "where": [
+     -1.48,
+     0.8,
+     -0.45
+    ]
+   },
+   "er|ribosomes": {
+    "unintended": false,
+    "faces": 952,
+    "depth": 0.907,
+    "where": [
+     2.39,
+     0.59,
+     0.94
+    ]
+   },
+   "er|vesicles": {
+    "unintended": true,
+    "faces": 37,
+    "depth": 0.032,
+    "where": [
+     0.61,
+     -1.3,
+     -0.52
+    ]
+   },
+   "fibers|ribosomes": {
+    "unintended": true,
+    "faces": 42,
+    "depth": 0.033,
+    "where": [
+     1.12,
+     2.43,
+     0.41
+    ]
+   },
+   "golgi|mitochondria": {
+    "unintended": true,
+    "faces": 46,
+    "depth": 1.446,
+    "where": [
+     1.43,
+     -1.01,
+     0.85
+    ]
+   }
+  },
+  "selfIntersections": {
+   "er": {
+    "faces": 7398,
+    "object": "er"
+   },
+   "fibers": {
+    "faces": 14,
+    "object": "fibers"
+   },
+   "golgi": {
+    "faces": 272,
+    "object": "golgi_copy"
+   },
+   "membrane": {
+    "faces": 11,
+    "object": "membrane.001"
+   },
+   "mitochondria": {
+    "faces": 7952,
+    "object": "mitochondria"
+   },
+   "nucleus": {
+    "faces": 640,
+    "object": "nucleus"
+   }
+  }
+ },
+ "cyanobacterium": {
+  "pairs": {
+   "cytoplasm|membrane": {
+    "unintended": true,
+    "faces": 164,
+    "depth": 0.004,
+    "where": [
+     -1.44,
+     0.91,
+     -0.08
+    ]
+   },
+   "cytoplasm|thylakoids": {
+    "unintended": true,
+    "faces": 12,
+    "depth": 0.004,
+    "where": [
+     -1.93,
+     0.4,
+     -0.6
+    ]
+   },
+   "cytoplasm|wall": {
+    "unintended": true,
+    "faces": 286,
+    "depth": 0.018,
+    "where": [
+     1.08,
+     0.15,
+     -0.91
+    ]
+   },
+   "membrane|wall": {
+    "unintended": true,
+    "faces": 568,
+    "depth": 0.07,
+    "where": [
+     -0.58,
+     0.24,
+     -0.95
+    ]
+   },
+   "nucleoid|ribosomes": {
+    "unintended": false,
+    "faces": 428,
+    "depth": 0.045,
+    "where": [
+     0.66,
+     -0.07,
+     -0.19
+    ]
+   },
+   "nucleoid|thylakoids": {
+    "unintended": true,
+    "faces": 429,
+    "depth": 0.015,
+    "where": [
+     -1.0,
+     0.4,
+     -0.28
+    ]
+   },
+   "ribosomes|thylakoids": {
+    "unintended": false,
+    "faces": 144,
+    "depth": 0.007,
+    "where": [
+     -0.42,
+     -0.17,
+     -0.27
+    ]
+   }
+  },
+  "selfIntersections": {
+   "nucleoid": {
+    "faces": 286,
+    "object": "nucleoid"
+   },
+   "ribosomes": {
+    "faces": 964,
+    "object": "ribosomes"
+   },
+   "thylakoids": {
+    "faces": 1270,
+    "object": "thylakoids"
+   }
+  }
+ },
+ "neuron": {
+  "pairs": {
+   "axon|membrane": {
+    "unintended": true,
+    "faces": 62,
+    "depth": 0.053,
+    "where": [
+     -1.65,
+     0.0,
+     0.3
+    ]
+   },
+   "axon|myelin": {
+    "unintended": false,
+    "faces": 544,
+    "depth": 0.196,
+    "where": [
+     -1.36,
+     0.05,
+     0.3
+    ]
+   },
+   "axon|soma": {
+    "unintended": false,
+    "faces": 32,
+    "depth": 0.034,
+    "where": [
+     -1.76,
+     -0.01,
+     0.13
+    ]
+   },
+   "axon|terminals": {
+    "unintended": false,
+    "faces": 110,
+    "depth": 0.035,
+    "where": [
+     3.1,
+     -0.15,
+     -0.57
+    ]
+   },
+   "dendrites|membrane": {
+    "unintended": true,
+    "faces": 434,
+    "depth": 0.036,
+    "where": [
+     -4.48,
+     0.2,
+     0.43
+    ]
+   },
+   "dendrites|soma": {
+    "unintended": false,
+    "faces": 359,
+    "depth": 0.049,
+    "where": [
+     -4.19,
+     0.5,
+     0.44
+    ]
+   },
+   "membrane|myelin": {
+    "unintended": true,
+    "faces": 98,
+    "depth": 0.067,
+    "where": [
+     -1.65,
+     -0.09,
+     0.25
+    ]
+   },
+   "membrane|soma": {
+    "unintended": false,
+    "faces": 452,
+    "depth": 0.018,
+    "where": [
+     -2.93,
+     0.03,
+     -0.36
+    ]
+   },
+   "myelin|soma": {
+    "unintended": true,
+    "faces": 42,
+    "depth": 0.036,
+    "where": [
+     -1.74,
+     -0.15,
+     0.2
+    ]
+   },
+   "myelin|terminals": {
+    "unintended": true,
+    "faces": 44,
+    "depth": 0.012,
+    "where": [
+     3.1,
+     -0.15,
+     -0.57
+    ]
+   },
+   "nucleolus|nucleus": {
+    "unintended": false,
+    "faces": 170,
+    "depth": 0.296,
+    "where": [
+     -2.99,
+     0.0,
+     0.17
+    ]
+   }
+  },
+  "selfIntersections": {
+   "dendrites": {
+    "faces": 27234,
+    "object": "dendrites"
+   },
+   "myelin": {
+    "faces": 3,
+    "object": "myelin"
+   },
+   "soma": {
+    "faces": 9,
+    "object": "soma"
+   },
+   "terminals": {
+    "faces": 1138,
+    "object": "terminals"
+   }
+  }
+ },
+ "plant-cell": {
+  "pairs": {
+   "chloroplast|er": {
+    "unintended": true,
+    "faces": 390,
+    "depth": 0.204,
+    "where": [
+     -1.49,
+     1.86,
+     -0.17
+    ]
+   },
+   "chloroplast|nucleus": {
+    "unintended": true,
+    "faces": 144,
+    "depth": 0.054,
+    "where": [
+     -1.63,
+     -1.61,
+     -0.2
+    ]
+   },
+   "er|nucleus": {
+    "unintended": true,
+    "faces": 18,
+    "depth": 0.061,
+    "where": [
+     -1.61,
+     -0.91,
+     -0.3
+    ]
+   },
+   "er|ribosomes": {
+    "unintended": false,
+    "faces": 435,
+    "depth": 0.106,
+    "where": [
+     -1.16,
+     -1.84,
+     -0.69
+    ]
+   },
+   "er|vacuole": {
+    "unintended": true,
+    "faces": 51,
+    "depth": 0.802,
+    "where": [
+     -0.34,
+     1.04,
+     -1.11
+    ]
+   },
+   "membrane|wall": {
+    "unintended": true,
+    "faces": 658,
+    "depth": 0.033,
+    "where": [
+     1.47,
+     0.48,
+     -1.83
+    ]
+   },
+   "nucleus|vacuole": {
+    "unintended": true,
+    "faces": 142,
+    "depth": 0.021,
+    "where": [
+     -1.45,
+     -1.27,
+     -0.4
+    ]
+   }
+  },
+  "selfIntersections": {
+   "chloroplast": {
+    "faces": 27149,
+    "object": "chloroplast.001"
+   },
+   "er": {
+    "faces": 2358,
+    "object": "er"
+   },
+   "golgi": {
+    "faces": 840,
+    "object": "golgi_copy"
+   },
+   "mitochondria": {
+    "faces": 2320,
+    "object": "mitochondria"
+   },
+   "nucleus": {
+    "faces": 740,
+    "object": "nucleus"
+   },
+   "ribosomes": {
+    "faces": 760,
+    "object": "ribosomes.001"
+   },
+   "vacuole": {
+    "faces": 5,
+    "object": "vacuole"
+   },
+   "wall": {
+    "faces": 2,
+    "object": "wall"
+   }
+  }
+ },
+ "red-blood-cell": {
+  "pairs": {},
+  "selfIntersections": {
+   "membrane": {
+    "faces": 64,
+    "object": "membrane.001"
+   },
+   "rbc_cytoplasm": {
+    "faces": 16,
+    "object": "rbc_cytoplasm.001"
+   }
+  }
+ },
+ "sperm-cell": {
+  "pairs": {
+   "flagellum|mitochondria": {
+    "unintended": false,
+    "faces": 760,
+    "depth": 0.079,
+    "where": [
+     -2.63,
+     0.01,
+     0.02
+    ]
+   },
+   "flagellum|nucleus": {
+    "unintended": false,
+    "faces": 76,
+    "depth": 0.121,
+    "where": [
+     -2.95,
+     0.1,
+     -0.0
+    ]
+   },
+   "mitochondria|nucleus": {
+    "unintended": true,
+    "faces": 32,
+    "depth": 0.01,
+    "where": [
+     -2.81,
+     0.01,
+     0.08
+    ]
+   }
+  },
+  "selfIntersections": {
+   "acrosome": {
+    "faces": 2,
+    "object": "acrosome"
+   },
+   "mitochondria": {
+    "faces": 1336,
+    "object": "mitochondria"
+   }
+  }
+ },
+ "white-blood-cell": {
+  "pairs": {
+   "membrane|mitochondria": {
+    "unintended": true,
+    "faces": 58,
+    "depth": 0.644,
+    "where": [
+     0.11,
+     -0.16,
+     -2.52
+    ]
+   }
+  },
+  "selfIntersections": {
+   "granules": {
+    "faces": 1184,
+    "object": "granules"
+   },
+   "membrane": {
+    "faces": 450,
+    "object": "membrane"
+   },
+   "mitochondria": {
+    "faces": 3180,
+    "object": "mitochondria"
+   },
+   "nucleus": {
+    "faces": 416,
+    "object": "nucleus"
+   }
+  }
+ }
+}

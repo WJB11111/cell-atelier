@@ -1,0 +1,375 @@
+/* ==========================================================================
+   Cell Atelier · 细胞标本室 — base stylesheet
+   Palette, typography, the three-column shell and every page component.
+   Responsive rules, viewer overlays, motion and scrollbars: refinements.css
+   --------------------------------------------------------------------------
+   1. Design tokens   2. Reset & base type   3. Shell & header   4. Catalogue
+   5. Viewer shell    6. Controls & loading  7. Detail panel     8. Comparison
+   ========================================================================== */
+
+/* 1. Design tokens -------------------------------------------------------- */
+:root {
+  /* paper */
+  --paper: #f1eee5;          /* page ground */
+  --paper-deep: #eae6da;     /* tinted cards: field note, key rows */
+  --viewer-bg: #f8f5ea;      /* canvas mount — matches the WebGL clear colour */
+  --panel: #f4f1e8;          /* floating panel */
+  --panel-bright: #fbf9f2;   /* buttons, chips, overlays */
+  /* ink */
+  --ink: #2f2c22;            /* display headings */
+  --ink-body: #4a4740;       /* values, button labels */
+  --ink-soft: #5f5c53;       /* body copy */
+  --ink-quiet: #7d7377;      /* italic English display lines */
+  --ink-muted: #6f6c62;      /* eyebrows, hints */
+  --ink-faint: #8c887d;      /* micro metadata, captions */
+  /* hairlines */
+  --rule: #e3ded1;
+  --rule-strong: #d5cec2;
+  /* accents — catalogue mauve; plant specimens shift to green in refinements */
+  --accent: #6f5a8c;
+  --accent-ink: #54446c;
+  --accent-soft: #e9e3ee;
+  --accent-line: #dcd1e4;
+  --live: #7d9a4a;
+  --focus: #6f5a8c;
+  /* type */
+  --serif: Georgia, 'Times New Roman', 'Songti SC', 'Noto Serif SC', 'Source Han Serif SC', serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+          'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
+  /* metrics */
+  --col-catalog: 256px;
+  --col-details: 320px;
+  --pad-x: 2rem;
+}
+
+/* 2. Reset & base type ---------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3 { margin: 0; font-family: var(--serif); font-weight: 400; color: var(--ink); }
+p, dl, dd, figure { margin: 0; }
+a { color: inherit; }
+img { max-width: 100%; }
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }  /* the viewer overlays toggle on this */
+/* Uppercase micro-label, e.g. THE COLLECTION / 标本集 */
+.eyebrow { margin: 0; font-size: 0.66rem; line-height: 1.6; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-muted); }
+
+/* 3. Shell & header ------------------------------------------------------- */
+#app { display: flex; flex-direction: column; min-height: 100vh; }
+header { display: flex; align-items: baseline; gap: 1.6rem; padding: 1.45rem var(--pad-x) 1.3rem; border-bottom: 1px solid var(--rule); }
+.brand {
+  font-family: var(--serif);
+  font-size: 1.72rem;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.brand span { margin-left: 0.15rem; }
+.tagline { font-family: var(--serif); font-style: italic; font-size: 1rem; color: var(--ink-muted); }
+.edition { margin-left: auto; font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-muted); white-space: nowrap; }
+.edition span { margin-left: 0.55rem; letter-spacing: 0.1em; color: var(--ink); }
+/* The three-column room: catalogue | viewer | notes. Bounded so the columns
+   scroll internally and the comparison waits below the fold. */
+main {
+  display: grid;
+  grid-template-columns: var(--col-catalog) minmax(0, 1fr) var(--col-details);
+  height: max(660px, calc(100vh - 4.6rem));
+  max-height: 960px;
+}
+
+/* 4. Catalogue ------------------------------------------------------------ */
+.catalog { display: flex; flex-direction: column; min-height: 0; overflow: auto; padding: 1.8rem 1.2rem 1.5rem 1.5rem; }
+.cell-list { display: flex; flex-direction: column; gap: 0.1rem; margin: 0.85rem 0 0.35rem; }
+button.specimen {
+  display: flex;
+  align-items: center;
+  gap: 0.72rem;
+  width: 100%;
+  padding: 0.68rem 0.62rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  line-height: 1.25;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+button.specimen:hover { background: var(--panel-bright); border-color: var(--rule); }
+button.specimen.selected,
+button.specimen[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-line); }
+.cell-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--accent);                 /* colour arrives inline from src.js */
+  background: rgba(47, 44, 34, 0.045);
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+.cell-icon img { display: block; width: 44px; height: 44px; object-fit: contain; }
+button.specimen > span:last-child { display: flex; flex-direction: column; min-width: 0; }
+button.specimen small {
+  margin-top: 0.28rem;
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  color: var(--ink-quiet);
+}
+.compare-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.72rem 0.2rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color 0.16s ease;
+}
+.compare-link:hover { color: var(--accent-ink); }
+.compare-link span { color: var(--ink-faint); }
+.index-note { margin-top: 0.8rem; font-size: 0.7rem; line-height: 1.7; color: var(--ink-faint); }
+.organelle-heading { margin-top: 1.3rem; }
+/* Structure index: dot + 中文 on the first line, English on the second. */
+#organelles { display: flex; flex-direction: column; gap: 0.05rem; margin-top: 0.7rem; }
+#organelles button {
+  --dot: var(--accent);               /* fallback; each row overrides inline */
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0 0.55rem;
+  padding: 0.36rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+#organelles button:hover { background: var(--panel-bright); border-color: var(--rule); color: var(--ink-body); }
+#organelles button.active,
+#organelles button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-ink); }
+#organelles .dot {
+  grid-row: 1 / span 2;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--dot);
+  box-shadow: 0 0 0 1px rgba(47, 44, 34, 0.08);
+}
+#organelles .en { grid-column: 2; font-size: 0.66rem; letter-spacing: 0.04em; color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#organelles button.active .en { color: var(--accent); }
+.catalog-foot { margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--rule); font-size: 0.68rem; line-height: 1.7; color: var(--ink-faint); }
+
+/* 5. Viewer shell --------------------------------------------------------- */
+/* Rows: title band · canvas · hint · toolbar. The canvas gets a definite box
+   from the 1fr row, which is what the renderer measures. */
+.viewer {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 1.55rem 1.7rem 1.25rem;
+  background: var(--viewer-bg);
+  border-left: 1px solid var(--rule-strong);
+  border-right: 1px solid var(--rule-strong);
+}
+.title { grid-area: 1 / 1 / 2 / 2; min-width: 0; }
+.title > p:last-child { margin-top: 0.7rem; font-size: 0.82rem; color: var(--ink-faint); }
+.title h1 { margin-top: 0.5rem; font-size: clamp(2.5rem, 4.3vw, 3.35rem); line-height: 1.02; letter-spacing: -0.015em; }
+.title h1 span { display: block; margin-top: 1rem; font-size: 1rem; letter-spacing: 0.32em; color: var(--ink-muted); }
+.view-badge {
+  grid-area: 1 / 2 / 2 / 3;
+  align-self: start;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.34rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--panel-bright);
+  font-size: 0.64rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.view-badge span { width: 7px; height: 7px; border-radius: 50%; background: var(--live); }
+#canvas {
+  grid-area: 2 / 1 / 3 / 3;
+  position: relative;                  /* anchors the label and leader overlays */
+  z-index: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--viewer-bg);
+  touch-action: none;                  /* orbit gestures must not scroll the page */
+}
+/* The renderer measures this box and paints into it; the drawing buffer and the
+   element must stay the same size, so the child canvas is pinned to the box. */
+#canvas > canvas { display: block; width: 100%; height: 100%; }
+#loading {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 6;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.66rem 1.15rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--panel-bright);
+  box-shadow: 0 6px 20px rgba(47, 44, 34, 0.06);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+#loading::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--live); }
+.hint { grid-area: 3 / 1 / 4 / 3; margin-top: 0.85rem; font-size: 0.74rem; letter-spacing: 0.09em; color: var(--ink-muted); text-align: center; }
+
+/* 6. Controls ------------------------------------------------------------- */
+.toolbar { grid-area: 4 / 1 / 5 / 3; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 0.8rem; }
+.toolbar button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0.42rem 0.82rem;
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  background: var(--panel-bright);
+  font-size: 0.78rem;
+  line-height: 1;
+  color: var(--ink-body);
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.toolbar button:hover:not(:disabled) { background: #fff; border-color: var(--rule-strong); color: var(--ink); }
+.toolbar button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-ink); }
+.toolbar button:disabled { background: transparent; color: var(--ink-faint); cursor: not-allowed; }
+
+/* 7. Detail panel --------------------------------------------------------- */
+.details { min-height: 0; overflow: auto; padding: 1.8rem 1.9rem 2.2rem; }
+#detail-icon { margin: 1.15rem 0 0.9rem; font-size: 2.5rem; line-height: 1; color: var(--accent); }
+.detail-number { font-size: 0.64rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); }
+#detail-title { margin-top: 0.55rem; font-size: 1.9rem; line-height: 1.25; }
+#detail-en { margin-top: 0.25rem; font-family: var(--serif); font-style: italic; font-size: 1.05rem; color: var(--ink-quiet); }
+.detail-rule { height: 1px; margin: 1.3rem 0; background: var(--rule); }
+#detail-description { font-size: 0.88rem; line-height: 1.95; }
+.details dl { margin-top: 1.35rem; }
+.details dt { font-size: 0.72rem; letter-spacing: 0.08em; color: var(--ink-faint); }
+.details dd { margin: 0.35rem 0 1.05rem; font-size: 0.85rem; line-height: 1.7; color: var(--ink-body); }
+.note { margin-top: 1.5rem; padding: 1.05rem 1.15rem 1.15rem; border-radius: 3px; background: var(--paper-deep); }
+.note > span { display: block; margin-bottom: 0.6rem; font-family: var(--serif); font-style: italic; font-size: 1.12rem; color: var(--ink-body); }
+.note p { font-size: 0.79rem; line-height: 1.95; }
+a.download {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 0.95rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.85rem;
+  color: var(--ink-body);
+  text-decoration: none;
+  transition: color 0.16s ease;
+}
+a.download span { font-size: 0.68rem; letter-spacing: 0.16em; color: var(--ink-faint); }
+a.download:hover { color: var(--accent-ink); }
+a.download[aria-disabled="true"] { color: var(--ink-faint); pointer-events: none; }
+a.download[aria-disabled="true"] span { opacity: 0.7; }
+
+/* 8. Comparison & footer -------------------------------------------------- */
+#cell-comparison { border-top: 1px solid var(--rule); }
+.comparison-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 2.5rem; padding: 2.3rem var(--pad-x) 1.4rem; }
+.comparison-heading h2 { margin-top: 0.6rem; font-size: 1.85rem; line-height: 1.25; }
+.comparison-heading > p { max-width: 34ch; font-size: 0.82rem; color: var(--ink-muted); }
+/* The table scrolls sideways inside this box instead of widening the page. */
+.comparison-scroll { overflow-x: auto; padding: 0 var(--pad-x) 0.8rem; }
+.comparison-scroll table { width: 100%; min-width: 760px; border-collapse: collapse; }
+.comparison-scroll caption { padding: 0 0 0.9rem; font-size: 0.72rem; color: var(--ink-faint); text-align: left; }
+.comparison-scroll th,
+.comparison-scroll td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.84rem;
+  line-height: 1.65;
+  text-align: left;
+  vertical-align: top;
+}
+.comparison-scroll thead th { border-bottom: 1px solid var(--rule-strong); font-weight: 500; color: var(--ink); white-space: nowrap; }
+.comparison-scroll tbody th { font-weight: 400; font-size: 0.79rem; color: var(--ink-muted); }
+.comparison-scroll tbody tr:hover th,
+.comparison-scroll tbody tr:hover td { background: rgba(255, 255, 255, 0.5); }
+.comparison-scroll tr.key-difference th,
+.comparison-scroll tr.key-difference td { background: var(--paper-deep); }
+.comparison-scroll tr.key-difference strong { font-weight: 600; color: var(--accent-ink); }
+/* Header cells carry a small "查看 3D ↗" button; the uncollected specimen stays
+   disabled and dashed instead of hidden. */
+.comparison-scroll thead th button {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.26rem 0.6rem;
+  border: 1px solid var(--accent-line);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--accent-ink);
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+.comparison-scroll thead th button:hover:not(:disabled) { background: var(--accent-soft); }
+.comparison-scroll thead th button:disabled { border-style: dashed; border-color: var(--rule); color: var(--ink-faint); cursor: not-allowed; }
+.comparison-notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.2rem 2.2rem;
+  padding: 1.6rem var(--pad-x) 2.4rem;
+  border-top: 1px solid var(--rule);
+}
+.comparison-notes p { font-size: 0.8rem; line-height: 1.9; }
+.comparison-notes strong { font-weight: 600; color: var(--ink); }
+footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.3rem var(--pad-x) 1.5rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+footer i { font-style: normal; margin: 0 0.35rem; opacity: 0.6; }
